@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=62.6"]
+build-backed = "setuptools.build_meta"
+
+[project]
+name = "moex_connector"
+version = "0.1"
+authors = [
+    { name="meznick", email="mezhng@gmail.com"},
+]
+description = "MOEX API connector"
+readme = "readme.md"
+lisense = { file = "LICENSE"}
+requires-python = ">=3.6"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent"
+]
+
+[project.urls]
+"Homepage" = "https://gitlab.com/meznick/moex_connector"
