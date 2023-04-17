@@ -1,6 +1,4 @@
 # MOEX Connector
-_Sorry english-based guys, this one for russians only, please use translate.google.ru_
-
 Копипаста с moex.com:
 ```
 Информационно-статистический сервер Московской Биржи (ИСС / ISS) функционирует в рамках 
@@ -15,12 +13,60 @@ _Sorry english-based guys, this one for russians only, please use translate.goog
 предоставляться или по подписке в режиме реального времени или в свободном доступе 
 (без авторизации, но с задержкой).
 ```
+[Линк на документацию](https://iss.moex.com/iss/reference/)
+
+## Установка
+```shell
+git clone git@github.com:meznick/moex_connector.git
+cd moex_connector
+pip install .
+``` 
+
+## Использование
+Создаем новый экземпляр:
+```python
+from moex.connector import MoexConnector
+mc = MoexConnector()
+```
+Так же можно передать в конструктор вид возвращаемых данных:
+```python
+from moex.connector import ConnectorModes, MoexConnector
+MoexConnector(ConnectorModes.JSON)
+MoexConnector(ConnectorModes.DATAFRAME)
+```
+Методы стоит вызывать следующим образом:
+```python
+from moex.connector import MoexConnector
+
+mc = MoexConnector()
+
+ticker = 'SBER'
+
+# вернет json
+mc.sec_indices(
+    # если в документации (ссылка в начале) параметр есть в эндпоинте,
+    # то его передаем как позиционный параметр
+    ticker,
+    # остальные параметры передаем как параметры GET-запроса, через
+    # именованные параметры, либо словарем через kwargs
+    lang='ru',
+    only_actual=1
+)
+
+# для эндпоинтов которые еще красиво не имплементированы можно воспользоваться
+mc.other_endpoint(
+    endpoint='/iss/statistics/engines/stock/markets/index/rusfar',
+    kwargs={
+        'date': '2024-01-01'
+    }
+)
+```
 
 ## Реализовано
-Обращение к любому из [методов](https://iss.moex.com/iss/reference/) и получение результата.
+- обращение к любому из методов, результат в виде pandas df, либо json.
 
 ## Планируется
 - Доделать аннотации параметров ко всем методам
-- Транспонирование результатов от некоторых методов
-- Добор всей информации возвращаемой некоторыми методами
-- ? Работа с авторизацией (для богатеньких буратин)
+- более умное форматирование возвращаемых данных
+- Добор всей информации возвращаемой некоторыми методами (забыл каких)
+- ? асинхронность
