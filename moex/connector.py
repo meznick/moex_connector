@@ -1,9 +1,18 @@
+from enum import Enum
 from functools import wraps
 
 from requests import Session
 from typing import Optional
 from xml.etree import ElementTree
 import pandas as pd
+
+
+class ConnectorModes(Enum):
+    DATAFRAME = 'df'
+    JSON = 'json'
+
+
+SELECTED_MODE = ConnectorModes.JSON
 
 
 def boilerplate_decorator(func):
@@ -14,9 +23,12 @@ def boilerplate_decorator(func):
             raise MoexConnector.APIException(
                 f"Bad response: [{response.status_code}] {response.text[:100]}."
             )
-        return MoexConnector.generate_dataframe_from_tree(
+        result = MoexConnector.generate_dataframe_from_tree(
             ElementTree.fromstring(response.text)
         )
+        if SELECTED_MODE == ConnectorModes.JSON:
+            result = result.to_json(orient='records')
+        return result
     return wrapper
 
 
@@ -33,6 +45,11 @@ class MoexConnector(Session):
         'datetime': 'datetime64[ns]',
         'double': 'float64'
     }
+
+    def __init__(self, connector_mode: ConnectorModes):
+        super().__init__()
+        global SELECTED_MODE
+        SELECTED_MODE = connector_mode
 
     @classmethod
     def generate_dataframe_from_tree(cls, xml_tree: ElementTree) -> pd.DataFrame:
