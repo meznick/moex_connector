@@ -12,6 +12,11 @@ class ConnectorModes(Enum):
     JSON = 'json'
 
 
+class TransformTypes(Enum):
+    DEFAULT = 'default'
+    SECURITY = 'security'
+
+
 SELECTED_MODE = ConnectorModes.JSON
 
 
@@ -23,13 +28,31 @@ def boilerplate_decorator(func):
             raise MoexConnector.APIException(
                 f"Bad response: [{response.status_code}] {response.text[:100]}."
             )
-        result = MoexConnector.generate_dataframe_from_tree(
-            ElementTree.fromstring(response.text)
+        return transform_result(
+            response.text,
+            args[0].response_transform_map[func.__name__]
         )
-        if SELECTED_MODE == ConnectorModes.JSON:
-            result = result.to_json(orient='records')
-        return result
     return wrapper
+
+
+def transform_result(
+        text: str,
+        transform_type: Optional[TransformTypes] = TransformTypes.DEFAULT,
+        ouput_format: Optional[ConnectorModes] = ConnectorModes.JSON
+):
+    if transform_type == TransformTypes.SECURITY:
+        transformed = MoexConnector.generate_dataframe_from_tree(
+            ElementTree.fromstring(text)
+        )[['name', 'value']].transpose()
+    else:
+        transformed = MoexConnector.generate_dataframe_from_tree(
+            ElementTree.fromstring(text)
+        )
+
+    if ouput_format == ConnectorModes.JSON:
+        transformed = transformed.to_json(orient='records')
+
+    return transformed
 
 
 class MoexConnector(Session):
@@ -43,13 +66,24 @@ class MoexConnector(Session):
         'int32': 'int32',
         'string': 'string',
         'datetime': 'datetime64[ns]',
-        'double': 'float64'
+        'double': 'float64',
+        'date': 'string'
     }
 
-    def __init__(self, connector_mode: ConnectorModes):
+    def __new__(cls, *args, **kwargs):
+        if not hasattr(cls, 'instance'):
+            cls.instance = super().__new__(cls)
+        return cls.instance
+
+    def __init__(self, connector_mode: Optional[ConnectorModes] = None):
         super().__init__()
         global SELECTED_MODE
-        SELECTED_MODE = connector_mode
+        if connector_mode:
+            SELECTED_MODE = connector_mode
+        self.response_transform_map = {
+            self.security.__name__: TransformTypes.SECURITY,
+            self.sec_indices.__name__: TransformTypes.DEFAULT
+        }
 
     @classmethod
     def generate_dataframe_from_tree(cls, xml_tree: ElementTree) -> pd.DataFrame:
@@ -91,6 +125,16 @@ class MoexConnector(Session):
             params: dict = None
         ):
         return self.get(f"{self.base_url}/securities/{ticker}", params=params)
+
+    @boilerplate_decorator
+    def sec_indices(
+            self,
+            ticker: str,
+            lang: Optional[str] = None,
+            only_actual: Optional[int] = 0,
+            params: dict = None
+        ):
+        return self.get(f"{self.base_url}/securities/{ticker}/indices", params=params)
 
     @boilerplate_decorator
     def sitenews(
