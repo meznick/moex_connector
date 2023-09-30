@@ -44,13 +44,17 @@ def transform_result(
     transform_type: Optional[TransformTypes] = TransformTypes.DEFAULT,
 ):
     if transform_type == TransformTypes.SECURITY:
-        transformed = MoexConnector._generate_dataframe_from_tree(
+        transformed = MoexConnector.generate_dataframe_from_tree(
             ElementTree.fromstring(text)
         )
         transformed.index = transformed.name
         transformed = transformed[['value']].transpose()
+        rename_dict = {
+            col: col.lower() for col in transformed.columns
+        }
+        transformed.rename(columns=rename_dict, inplace=True)
     else:
-        transformed = MoexConnector._generate_dataframe_from_tree(
+        transformed = MoexConnector.generate_dataframe_from_tree(
             ElementTree.fromstring(text)
         )
 
@@ -89,19 +93,26 @@ class MoexConnector(Session):
             self.security.__name__: TransformTypes.SECURITY,
             self.securities.__name__: TransformTypes.DEFAULT,
             self.sec_indices.__name__: TransformTypes.DEFAULT,
+            self.sitenews.__name__: TransformTypes.DEFAULT,
+            self.events.__name__: TransformTypes.DEFAULT,
+            self.engines.__name__: TransformTypes.DEFAULT,
+            self.markets.__name__: TransformTypes.DEFAULT,
+            self.boards.__name__: TransformTypes.DEFAULT,
         }
 
     @classmethod
-    def _generate_dataframe_from_tree(cls, xml_tree: ElementTree) -> pd.DataFrame:
+    def generate_dataframe_from_tree(cls, xml_tree: ElementTree) -> pd.DataFrame:
         df = pd.DataFrame({
-            column.get('name'): pd.Series(
+            column.get('name').lower(): pd.Series(
                 dtype=cls._DTYPE_MAP[column.get('type')]
             ) for column in xml_tree[0][0][0]
         })
         df = pd.concat([
             df,
             pd.DataFrame({
-                name: [row.get(name) for row in xml_tree[0][1]] for name in df.columns.tolist()
+                name.lower(): [
+                    row.get(name) for row in xml_tree[0][1]
+                ] for name in df.columns.tolist()
             })
         ])
         return df
