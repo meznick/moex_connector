@@ -1,19 +1,28 @@
 from unittest import TestCase, main
-from moex.connector import MoexConnector
+from moex.connector import MoexConnector, ConnectorModes
 
-mc = MoexConnector()
+mc = MoexConnector(connector_mode=ConnectorModes.DATAFRAME)
 
 
 class TestEndpoints(TestCase):
-    SECURITY_COLUMNS = [
+    SECURITIES_COLUMNS = [
         'id', 'secid', 'shortname', 'regnumber', 'name', 'isin', 'is_traded', 'emitent_id',
         'emitent_title', 'emitent_inn', 'emitent_okpo', 'gosreg', 'type', 'group',
         'primary_boardid', 'marketprice_boardid'
     ]
+    SECURITY_COLUMNS = [
+        'secid', 'name', 'shortname', 'isin', 'regnumber', 'issuesize', 'facevalue', 'faceunit',
+        'issuedate', 'latname', 'listlevel', 'isqualifiedinvestors', 'morningsession',
+        'eveningsession', 'typename', 'group', 'type', 'groupname', 'emitter_id'
+    ]
 
     def test_security(self):
-        # sc = mc.security('SBER')
-        pass
+        sc = mc.security('SBER')
+        assert (
+            len(self.SECURITY_COLUMNS) ==
+            len([col for col in self.SECURITY_COLUMNS if col.upper() in sc.columns.tolist()])
+        )
+        assert 1 == len(sc.index)
 
     def test_site_news(self):
         # nws = mc.sitenews()
@@ -27,7 +36,7 @@ class TestEndpoints(TestCase):
         with self.subTest(params=None):
             scs = mc.securities()
             assert 100 == len(scs)
-            assert len([col for col in self.SECURITY_COLUMNS if col in scs.columns.tolist()]) == 16
+            assert len([col for col in self.SECURITIES_COLUMNS if col in scs.columns.tolist()]) == 16
             assert len(scs.id.unique().tolist()) == len(scs)
 
         with self.subTest(limit=5):
