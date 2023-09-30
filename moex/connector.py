@@ -28,28 +28,33 @@ def boilerplate_decorator(func):
             raise MoexConnector.APIException(
                 f"Bad response: [{response.status_code}] {response.text[:100]}."
             )
+
+        global SELECTED_MODE
         return transform_result(
             response.text,
+            SELECTED_MODE,
             args[0].response_transform_map[func.__name__]
         )
     return wrapper
 
 
 def transform_result(
-        text: str,
-        transform_type: Optional[TransformTypes] = TransformTypes.DEFAULT,
-        ouput_format: Optional[ConnectorModes] = ConnectorModes.JSON
+    text: str,
+    output_format: Optional[ConnectorModes],
+    transform_type: Optional[TransformTypes] = TransformTypes.DEFAULT,
 ):
     if transform_type == TransformTypes.SECURITY:
         transformed = MoexConnector.generate_dataframe_from_tree(
             ElementTree.fromstring(text)
-        )[['name', 'value']].transpose()
+        )
+        transformed.index = transformed.name
+        transformed = transformed[['value']].transpose()
     else:
         transformed = MoexConnector.generate_dataframe_from_tree(
             ElementTree.fromstring(text)
         )
 
-    if ouput_format == ConnectorModes.JSON:
+    if output_format == ConnectorModes.JSON:
         transformed = transformed.to_json(orient='records')
 
     return transformed
@@ -82,7 +87,8 @@ class MoexConnector(Session):
             SELECTED_MODE = connector_mode
         self.response_transform_map = {
             self.security.__name__: TransformTypes.SECURITY,
-            self.sec_indices.__name__: TransformTypes.DEFAULT
+            self.securities.__name__: TransformTypes.DEFAULT,
+            self.sec_indices.__name__: TransformTypes.DEFAULT,
         }
 
     @classmethod
@@ -102,62 +108,129 @@ class MoexConnector(Session):
 
     @boilerplate_decorator
     def securities(
-            self,
-            q: Optional[str] = None,
-            lang: Optional[str] = None,
-            engine: Optional[str] = None,
-            is_trading: Optional[bool] = None,
-            market: Optional[str] = None,
-            group_by: Optional[str] = None,
-            group_by_filter: Optional[str] = None,
-            limit: int = 100,
-            start: int = 0,
-            params: dict = None
-        ):
+        self,
+        q: Optional[str] = None,
+        lang: Optional[str] = None,
+        engine: Optional[str] = None,
+        is_trading: Optional[bool] = None,
+        market: Optional[str] = None,
+        group_by: Optional[str] = None,
+        group_by_filter: Optional[str] = None,
+        limit: int = 100,
+        start: int = 0,
+        params: dict = None
+    ):
+        """
+        List of securities traded on the Moscow Stock Exchange.
+        MOEX doc ref: https://iss.moex.com/iss/reference/5
+        """
         return self.get(f"{self.base_url}/securities", params=params)
 
     @boilerplate_decorator
     def security(
-            self,
-            ticker: str,
-            lang: Optional[str] = None,
-            start: int = 0,
-            params: dict = None
-        ):
+        self,
+        ticker: str,
+        lang: Optional[str] = None,
+        start: int = 0,
+        params: dict = None
+    ):
+        """
+        Get instrument specification. For example: https://iss.moex.com/iss/securities/IMOEX.xml.
+        MOEX doc ref: https://iss.moex.com/iss/reference/13
+        """
         return self.get(f"{self.base_url}/securities/{ticker}", params=params)
 
     @boilerplate_decorator
     def sec_indices(
-            self,
-            ticker: str,
-            lang: Optional[str] = None,
-            only_actual: Optional[int] = 0,
-            params: dict = None
-        ):
+        self,
+        ticker: str,
+        lang: Optional[str] = None,
+        only_actual: Optional[int] = 0,
+        params: dict = None
+    ):
+        """
+        List of indexes in which the security is included.
+        MOEX doc ref: https://iss.moex.com/iss/reference/160
+        """
         return self.get(f"{self.base_url}/securities/{ticker}/indices", params=params)
 
     @boilerplate_decorator
     def sitenews(
-            self,
-            start: int = 0,
-            lang: str = 'ru',
-            params: dict = None
+        self,
+        start: int = 0,
+        lang: str = 'ru',
+        params: dict = None
     ):
+        """
+        Exchange news.
+        MOEX doc ref: https://iss.moex.com/iss/reference/191
+        """
         return self.get(f"{self.base_url}/sitenews", params=params)
 
     @boilerplate_decorator
     def events(
-            self,
-            start: int = 0,
-            lang: str = 'ru',
-            params: dict = None
+        self,
+        start: int = 0,
+        lang: str = 'ru',
+        params: dict = None
     ):
+        """
+        Exchange events.
+        MOEX doc ref: https://iss.moex.com/iss/reference/193
+        """
         return self.get(f"{self.base_url}/events", params=params)
 
     @boilerplate_decorator
-    def other_endpoint(
-            self,
-            endpoint: str,
-            **kwargs
+    def engines(
+        self,
+        lang: str = 'ru',
+        params: dict = None
     ):
+        """
+        Get available trading systems. For example: https://iss.moex.com/iss/engines.xml.
+        MOEX doc ref: https://iss.moex.com/iss/reference/40
+        """
+        return self.get(f"{self.base_url}/engines", params=params)
+
+    @boilerplate_decorator
+    def markets(
+        self,
+        engine: str = 'stock',
+        lang: str = 'ru',
+        params: dict = None
+    ):
+        """
+        Get a list of markets of the trading system.
+        For example: https://iss.moex.com/iss/engines/stock/markets.xml
+        MOEX doc ref: https://iss.moex.com/iss/reference/42
+        """
+        return self.get(f"{self.base_url}/engines/{engine}/markets", params=params)
+
+    @boilerplate_decorator
+    def boards(
+            self,
+            engine: str = 'stock',
+            market: str = 'shares',
+            lang: str = 'ru',
+            params: dict = None
+    ):
+        """
+        Retrieve a directory of market trading modes.
+        For example: https://iss.moex.com/iss/engines/stock/markets/shares/boards.xml.
+        MOEX doc ref: https://iss.moex.com/iss/reference/43
+        """
+        return self.get(
+            f"{self.base_url}/engines/{engine}/markets/{market}/boards",
+            params=params
+        )
+
+    @boilerplate_decorator
+    def other_endpoint(
+        self,
+        endpoint: str,
+        **kwargs
+    ):
+        """
+        Call any other API method from list https://iss.moex.com/iss/reference/.
+        """
         return self.get(f"{self.base_url}/{endpoint}", params=kwargs['params'])
