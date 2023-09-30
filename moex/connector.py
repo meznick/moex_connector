@@ -44,13 +44,13 @@ def transform_result(
     transform_type: Optional[TransformTypes] = TransformTypes.DEFAULT,
 ):
     if transform_type == TransformTypes.SECURITY:
-        transformed = MoexConnector.generate_dataframe_from_tree(
+        transformed = MoexConnector._generate_dataframe_from_tree(
             ElementTree.fromstring(text)
         )
         transformed.index = transformed.name
         transformed = transformed[['value']].transpose()
     else:
-        transformed = MoexConnector.generate_dataframe_from_tree(
+        transformed = MoexConnector._generate_dataframe_from_tree(
             ElementTree.fromstring(text)
         )
 
@@ -64,9 +64,9 @@ class MoexConnector(Session):
     class APIException(Exception):
         pass
 
-    base_url = "https://iss.moex.com/iss"
+    _base_url = "https://iss.moex.com/iss"
 
-    DTYPE_MAP = {
+    _DTYPE_MAP = {
         'int64': 'int64',
         'int32': 'int32',
         'string': 'string',
@@ -77,8 +77,8 @@ class MoexConnector(Session):
 
     def __new__(cls, *args, **kwargs):
         if not hasattr(cls, 'instance'):
-            cls.instance = super().__new__(cls)
-        return cls.instance
+            cls._instance = super().__new__(cls)
+        return cls._instance
 
     def __init__(self, connector_mode: Optional[ConnectorModes] = None):
         super().__init__()
@@ -92,10 +92,10 @@ class MoexConnector(Session):
         }
 
     @classmethod
-    def generate_dataframe_from_tree(cls, xml_tree: ElementTree) -> pd.DataFrame:
+    def _generate_dataframe_from_tree(cls, xml_tree: ElementTree) -> pd.DataFrame:
         df = pd.DataFrame({
             column.get('name'): pd.Series(
-                dtype=cls.DTYPE_MAP[column.get('type')]
+                dtype=cls._DTYPE_MAP[column.get('type')]
             ) for column in xml_tree[0][0][0]
         })
         df = pd.concat([
@@ -124,7 +124,7 @@ class MoexConnector(Session):
         List of securities traded on the Moscow Stock Exchange.
         MOEX doc ref: https://iss.moex.com/iss/reference/5
         """
-        return self.get(f"{self.base_url}/securities", params=params)
+        return self.get(f"{self._base_url}/securities", params=params)
 
     @boilerplate_decorator
     def security(
@@ -138,7 +138,7 @@ class MoexConnector(Session):
         Get instrument specification. For example: https://iss.moex.com/iss/securities/IMOEX.xml.
         MOEX doc ref: https://iss.moex.com/iss/reference/13
         """
-        return self.get(f"{self.base_url}/securities/{ticker}", params=params)
+        return self.get(f"{self._base_url}/securities/{ticker}", params=params)
 
     @boilerplate_decorator
     def sec_indices(
@@ -152,7 +152,7 @@ class MoexConnector(Session):
         List of indexes in which the security is included.
         MOEX doc ref: https://iss.moex.com/iss/reference/160
         """
-        return self.get(f"{self.base_url}/securities/{ticker}/indices", params=params)
+        return self.get(f"{self._base_url}/securities/{ticker}/indices", params=params)
 
     @boilerplate_decorator
     def sitenews(
@@ -165,7 +165,7 @@ class MoexConnector(Session):
         Exchange news.
         MOEX doc ref: https://iss.moex.com/iss/reference/191
         """
-        return self.get(f"{self.base_url}/sitenews", params=params)
+        return self.get(f"{self._base_url}/sitenews", params=params)
 
     @boilerplate_decorator
     def events(
@@ -178,7 +178,7 @@ class MoexConnector(Session):
         Exchange events.
         MOEX doc ref: https://iss.moex.com/iss/reference/193
         """
-        return self.get(f"{self.base_url}/events", params=params)
+        return self.get(f"{self._base_url}/events", params=params)
 
     @boilerplate_decorator
     def engines(
@@ -190,7 +190,7 @@ class MoexConnector(Session):
         Get available trading systems. For example: https://iss.moex.com/iss/engines.xml.
         MOEX doc ref: https://iss.moex.com/iss/reference/40
         """
-        return self.get(f"{self.base_url}/engines", params=params)
+        return self.get(f"{self._base_url}/engines", params=params)
 
     @boilerplate_decorator
     def markets(
@@ -204,7 +204,7 @@ class MoexConnector(Session):
         For example: https://iss.moex.com/iss/engines/stock/markets.xml
         MOEX doc ref: https://iss.moex.com/iss/reference/42
         """
-        return self.get(f"{self.base_url}/engines/{engine}/markets", params=params)
+        return self.get(f"{self._base_url}/engines/{engine}/markets", params=params)
 
     @boilerplate_decorator
     def boards(
@@ -220,7 +220,7 @@ class MoexConnector(Session):
         MOEX doc ref: https://iss.moex.com/iss/reference/43
         """
         return self.get(
-            f"{self.base_url}/engines/{engine}/markets/{market}/boards",
+            f"{self._base_url}/engines/{engine}/markets/{market}/boards",
             params=params
         )
 
@@ -233,4 +233,4 @@ class MoexConnector(Session):
         """
         Call any other API method from list https://iss.moex.com/iss/reference/.
         """
-        return self.get(f"{self.base_url}/{endpoint}", params=kwargs['params'])
+        return self.get(f"{self._base_url}/{endpoint}", params=kwargs['params'])
