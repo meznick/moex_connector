@@ -1,3 +1,4 @@
+from datetime import date
 from enum import Enum
 from functools import wraps
 
@@ -98,6 +99,7 @@ class MoexConnector(Session):
             self.engines.__name__: TransformTypes.DEFAULT,
             self.markets.__name__: TransformTypes.DEFAULT,
             self.boards.__name__: TransformTypes.DEFAULT,
+            self.candles.__name__: TransformTypes.DEFAULT,
         }
 
     @classmethod
@@ -206,7 +208,7 @@ class MoexConnector(Session):
     @boilerplate_decorator
     def markets(
         self,
-        engine: str = 'stock',
+        engine: str,
         lang: str = 'ru',
         params: dict = None
     ):
@@ -220,8 +222,8 @@ class MoexConnector(Session):
     @boilerplate_decorator
     def boards(
             self,
-            engine: str = 'stock',
-            market: str = 'shares',
+            engine: str,
+            market: str,
             lang: str = 'ru',
             params: dict = None
     ):
@@ -233,6 +235,33 @@ class MoexConnector(Session):
         return self.get(
             f"{self._base_url}/engines/{engine}/markets/{market}/boards",
             params=params
+        )
+
+    @boilerplate_decorator
+    def candles(
+        self,
+        engine: str,
+        market: str,
+        security: str,
+        start: Optional[int] = 0,
+        till: Optional[date] = date.today(),
+        _from: Optional[date] = date.today(),
+        interval: Optional[int] = 5,
+        params: dict = None
+    ):
+        """
+        Get candles of the specified instrument according to the default mode group.
+         MOEX doc ref: https://iss.moex.com/iss/reference/155
+        """
+        if not params:
+            params = dict()
+            params['from'] = _from.strftime('%Y-%m-%d')
+            params['till'] = till.strftime('%Y-%m-%d')
+            params['start'] = start
+            params['interval'] = interval
+
+        return self.get(
+            f"{self._base_url}/engines/{engine}/markets/{market}/securities/{security}/candles"
         )
 
     @boilerplate_decorator

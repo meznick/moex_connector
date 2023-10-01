@@ -20,6 +20,7 @@ class TestEndpoints(TestCase):
     BOARDS_COLUMNS = ['id', 'board_group_id', 'boardid', 'title', 'is_traded']
     SITE_NEWS_COLUMNS = ['id', 'tag', 'title', 'published_at', 'modified_at']
     EVENTS_COLUMNS = SITE_NEWS_COLUMNS
+    CANDLES_COLUMNS = ['open', 'close', 'high', 'low', 'value', 'volume', 'begin', 'end']
 
     def test_security(self):
         sc = mc.security('SBER')
@@ -85,17 +86,24 @@ class TestEndpoints(TestCase):
         )
 
     def test_markets(self):
-        m = mc.markets()
+        m = mc.markets('stock')
         assert (
                 len([col for col in self.MARKET_COLUMNS if col in m.columns.tolist()]) ==
                 len(self.MARKET_COLUMNS)
         )
 
     def test_boards(self):
-        b = mc.boards()
+        b = mc.boards('stock', 'shares')
         assert (
                 len([col for col in self.BOARDS_COLUMNS if col in b.columns.tolist()]) ==
                 len(self.BOARDS_COLUMNS)
+        )
+
+    def test_candles(self):
+        c = mc.candles('stock', 'shares', 'SBER')
+        assert (
+                len([col for col in self.CANDLES_COLUMNS if col in c.columns.tolist()]) ==
+                len(self.CANDLES_COLUMNS)
         )
 
     def test_other_endpoint(self):
