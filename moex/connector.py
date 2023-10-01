@@ -137,6 +137,17 @@ class MoexConnector(Session):
         List of securities traded on the Moscow Stock Exchange.
         MOEX doc ref: https://iss.moex.com/iss/reference/5
         """
+        if not params:
+            params = dict()
+            params['q'] = q
+            params['lang'] = lang
+            params['engine'] = engine
+            params['is_trading'] = is_trading
+            params['market'] = market
+            params['group_by'] = group_by
+            params['group_by_filter'] = group_by_filter
+            params['limit'] = limit
+            params['start'] = start
         return self.get(f"{self._base_url}/securities", params=params)
 
     @boilerplate_decorator
@@ -151,6 +162,10 @@ class MoexConnector(Session):
         Get instrument specification. For example: https://iss.moex.com/iss/securities/IMOEX.xml.
         MOEX doc ref: https://iss.moex.com/iss/reference/13
         """
+        if not params:
+            params = dict()
+            params['lang'] = lang
+            params['start'] = start
         return self.get(f"{self._base_url}/securities/{ticker}", params=params)
 
     @boilerplate_decorator
@@ -165,6 +180,10 @@ class MoexConnector(Session):
         List of indexes in which the security is included.
         MOEX doc ref: https://iss.moex.com/iss/reference/160
         """
+        if not params:
+            params = dict()
+            params['lang'] = lang
+            params['only_actual'] = only_actual
         return self.get(f"{self._base_url}/securities/{ticker}/indices", params=params)
 
     @boilerplate_decorator
@@ -178,6 +197,10 @@ class MoexConnector(Session):
         Exchange news.
         MOEX doc ref: https://iss.moex.com/iss/reference/191
         """
+        if not params:
+            params = dict()
+            params['lang'] = lang
+            params['start'] = start
         return self.get(f"{self._base_url}/sitenews", params=params)
 
     @boilerplate_decorator
@@ -191,6 +214,10 @@ class MoexConnector(Session):
         Exchange events.
         MOEX doc ref: https://iss.moex.com/iss/reference/193
         """
+        if not params:
+            params = dict()
+            params['lang'] = lang
+            params['start'] = start
         return self.get(f"{self._base_url}/events", params=params)
 
     @boilerplate_decorator
@@ -203,6 +230,9 @@ class MoexConnector(Session):
         Get available trading systems. For example: https://iss.moex.com/iss/engines.xml.
         MOEX doc ref: https://iss.moex.com/iss/reference/40
         """
+        if not params:
+            params = dict()
+            params['lang'] = lang
         return self.get(f"{self._base_url}/engines", params=params)
 
     @boilerplate_decorator
@@ -217,6 +247,9 @@ class MoexConnector(Session):
         For example: https://iss.moex.com/iss/engines/stock/markets.xml
         MOEX doc ref: https://iss.moex.com/iss/reference/42
         """
+        if not params:
+            params = dict()
+            params['lang'] = lang
         return self.get(f"{self._base_url}/engines/{engine}/markets", params=params)
 
     @boilerplate_decorator
@@ -232,6 +265,9 @@ class MoexConnector(Session):
         For example: https://iss.moex.com/iss/engines/stock/markets/shares/boards.xml.
         MOEX doc ref: https://iss.moex.com/iss/reference/43
         """
+        if not params:
+            params = dict()
+            params['lang'] = lang
         return self.get(
             f"{self._base_url}/engines/{engine}/markets/{market}/boards",
             params=params
