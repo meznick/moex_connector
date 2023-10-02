@@ -23,6 +23,7 @@ class TestEndpoints(TestCase):
     EVENTS_COLUMNS = SITE_NEWS_COLUMNS
     CANDLES_COLUMNS = ['open', 'close', 'high', 'low', 'value', 'volume', 'begin', 'end']
 
+    # test
     # def test_security(self):
     #     sc = mc.security('SBER')
     #     assert (
