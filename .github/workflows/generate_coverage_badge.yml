@@ -16,7 +16,8 @@ jobs:
         with:
           python-version: "3.11.5"
       - name: Install deps
-        run: pip install -r requirements.txt
+        run: |
+          pip install -r requirements.txt & pip install coveralls
       - name: Get and pass branch name to Coveralls
         run: |
           branch_name=$(echo $GITHUB_REF | awk -F/ '{print $3}')
