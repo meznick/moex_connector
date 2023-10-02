@@ -1,33 +1,57 @@
 from unittest import TestCase, main
-from moex.connector import MoexConnector
+from moex.connector import MoexConnector, ConnectorModes
 
-mc = MoexConnector()
+mc = MoexConnector(connector_mode=ConnectorModes.DATAFRAME)
 
 
 class TestEndpoints(TestCase):
-    SECURITY_COLUMNS = [
+    SECURITIES_COLUMNS = [
         'id', 'secid', 'shortname', 'regnumber', 'name', 'isin', 'is_traded', 'emitent_id',
         'emitent_title', 'emitent_inn', 'emitent_okpo', 'gosreg', 'type', 'group',
         'primary_boardid', 'marketprice_boardid'
     ]
+    SECURITY_COLUMNS = [
+        'secid', 'name', 'shortname', 'isin', 'regnumber', 'issuesize', 'facevalue', 'faceunit',
+        'issuedate', 'latname', 'listlevel', 'isqualifiedinvestors', 'morningsession',
+        'eveningsession', 'typename', 'group', 'type', 'groupname', 'emitter_id'
+    ]
+    ENGINES_COLUMNS = ['id', 'name', 'title']
+    MARKET_COLUMNS = ENGINES_COLUMNS
+    BOARDS_COLUMNS = ['id', 'board_group_id', 'boardid', 'title', 'is_traded']
+    SITE_NEWS_COLUMNS = ['id', 'tag', 'title', 'published_at', 'modified_at']
+    EVENTS_COLUMNS = SITE_NEWS_COLUMNS
+    CANDLES_COLUMNS = ['open', 'close', 'high', 'low', 'value', 'volume', 'begin', 'end']
 
     def test_security(self):
-        # sc = mc.security('SBER')
-        pass
+        sc = mc.security('SBER')
+        assert (
+            len(self.SECURITY_COLUMNS) ==
+            len([col for col in self.SECURITY_COLUMNS if col in sc.columns.tolist()])
+        )
+        assert 1 == len(sc.index)
 
     def test_site_news(self):
-        # nws = mc.sitenews()
-        pass
+        sn = mc.sitenews()
+        assert (
+            len(self.SITE_NEWS_COLUMNS) ==
+            len([col for col in self.SITE_NEWS_COLUMNS if col in sn.columns.tolist()])
+        )
 
     def test_events(self):
-        # evs = mc.events()
-        pass
+        e = mc.sitenews()
+        assert (
+                len(self.EVENTS_COLUMNS) ==
+                len([col for col in self.EVENTS_COLUMNS if col in e.columns.tolist()])
+        )
 
     def test_securities(self):
         with self.subTest(params=None):
             scs = mc.securities()
             assert 100 == len(scs)
-            assert len([col for col in self.SECURITY_COLUMNS if col in scs.columns.tolist()]) == 16
+            assert (
+                len([col for col in self.SECURITIES_COLUMNS if col in scs.columns.tolist()]) ==
+                len(self.SECURITIES_COLUMNS)
+            )
             assert len(scs.id.unique().tolist()) == len(scs)
 
         with self.subTest(limit=5):
@@ -53,6 +77,34 @@ class TestEndpoints(TestCase):
             assert len(ids_0) == len(ids_1) == 10
             assert len((set(ids_0) - set(ids_1))) == 10
             assert len((set(ids_1) - set(ids_0))) == 10
+
+    def test_engines(self):
+        e = mc.engines()
+        assert (
+            len([col for col in self.ENGINES_COLUMNS if col in e.columns.tolist()]) ==
+            len(self.ENGINES_COLUMNS)
+        )
+
+    def test_markets(self):
+        m = mc.markets('stock')
+        assert (
+                len([col for col in self.MARKET_COLUMNS if col in m.columns.tolist()]) ==
+                len(self.MARKET_COLUMNS)
+        )
+
+    def test_boards(self):
+        b = mc.boards('stock', 'shares')
+        assert (
+                len([col for col in self.BOARDS_COLUMNS if col in b.columns.tolist()]) ==
+                len(self.BOARDS_COLUMNS)
+        )
+
+    def test_candles(self):
+        c = mc.candles('stock', 'shares', 'SBER')
+        assert (
+                len([col for col in self.CANDLES_COLUMNS if col in c.columns.tolist()]) ==
+                len(self.CANDLES_COLUMNS)
+        )
 
     def test_other_endpoint(self):
         # ts = mc.other_endpoint('turnovers', lang='ru')

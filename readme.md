@@ -55,7 +55,7 @@ mc.sec_indices(
 
 # для эндпоинтов которые еще красиво не имплементированы можно воспользоваться
 mc.other_endpoint(
-    endpoint='/iss/statistics/engines/stock/markets/index/rusfar',
+    endpoint='statistics/engines/stock/markets/index/rusfar',
     kwargs={
         'date': '2024-01-01'
     }
