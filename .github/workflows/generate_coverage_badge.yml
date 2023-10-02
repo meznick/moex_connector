@@ -3,8 +3,8 @@ name: Generate coverage
 on:
   push:
     branches:
-      - main
-      - hotfix/params
+      - 'main'
+      - 'hotfix/**'
 
 jobs:
   build:
