@@ -23,14 +23,13 @@ class TestEndpoints(TestCase):
     EVENTS_COLUMNS = SITE_NEWS_COLUMNS
     CANDLES_COLUMNS = ['open', 'close', 'high', 'low', 'value', 'volume', 'begin', 'end']
 
-    # test
-    # def test_security(self):
-    #     sc = mc.security('SBER')
-    #     assert (
-    #         len(self.SECURITY_COLUMNS) ==
-    #         len([col for col in self.SECURITY_COLUMNS if col in sc.columns.tolist()])
-    #     )
-    #     assert 1 == len(sc.index)
+    def test_security(self):
+        sc = mc.security('SBER')
+        # assert (
+        #     len(self.SECURITY_COLUMNS) ==
+        #     len([col for col in self.SECURITY_COLUMNS if col in sc.columns.tolist()])
+        # )
+        # assert 1 == len(sc.index)
 
     def test_site_news(self):
         sn = mc.sitenews()
