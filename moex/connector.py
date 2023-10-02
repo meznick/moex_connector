@@ -58,6 +58,10 @@ def transform_result(
         transformed = MoexConnector.generate_dataframe_from_tree(
             ElementTree.fromstring(text)
         )
+        rename_dict = {
+            col: col.lower() for col in transformed.columns
+        }
+        transformed.rename(columns=rename_dict, inplace=True)
 
     if output_format == ConnectorModes.JSON:
         transformed = transformed.to_json(orient='records')
@@ -105,14 +109,14 @@ class MoexConnector(Session):
     @classmethod
     def generate_dataframe_from_tree(cls, xml_tree: ElementTree) -> pd.DataFrame:
         df = pd.DataFrame({
-            column.get('name').lower(): pd.Series(
+            column.get('name'): pd.Series(
                 dtype=cls._DTYPE_MAP[column.get('type')]
             ) for column in xml_tree[0][0][0]
         })
         df = pd.concat([
             df,
             pd.DataFrame({
-                name.lower(): [
+                name: [
                     row.get(name) for row in xml_tree[0][1]
                 ] for name in df.columns.tolist()
             })

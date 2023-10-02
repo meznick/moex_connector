@@ -91,6 +91,7 @@ class TestEndpoints(TestCase):
                 len([col for col in self.MARKET_COLUMNS if col in m.columns.tolist()]) ==
                 len(self.MARKET_COLUMNS)
         )
+        assert 0 == sum([x for x in m.isna().sum()])
 
     def test_boards(self):
         b = mc.boards('stock', 'shares')
