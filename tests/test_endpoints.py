@@ -1,3 +1,4 @@
+import datetime
 from unittest import TestCase, main
 from moex.connector import MoexConnector, ConnectorModes
 
@@ -101,11 +102,13 @@ class TestEndpoints(TestCase):
         )
 
     def test_candles(self):
+        from_date = datetime.date.today() - datetime.timedelta(days=5)
         c = mc.candles('stock', 'shares', 'SBER')
         assert (
                 len([col for col in self.CANDLES_COLUMNS if col in c.columns.tolist()]) ==
                 len(self.CANDLES_COLUMNS)
         )
+        assert from_date == c['begin'].min().date()
 
     def test_other_endpoint(self):
         # ts = mc.other_endpoint('turnovers', lang='ru')

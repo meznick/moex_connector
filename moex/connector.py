@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 from enum import Enum
 from functools import wraps
 
@@ -44,24 +44,18 @@ def transform_result(
     output_format: Optional[ConnectorModes],
     transform_type: Optional[TransformTypes] = TransformTypes.DEFAULT,
 ):
+    transformed = MoexConnector.generate_dataframe_from_tree(
+        ElementTree.fromstring(text)
+    )
+
     if transform_type == TransformTypes.SECURITY:
-        transformed = MoexConnector.generate_dataframe_from_tree(
-            ElementTree.fromstring(text)
-        )
         transformed.index = transformed.name
         transformed = transformed[['value']].transpose()
-        rename_dict = {
-            col: col.lower() for col in transformed.columns
-        }
-        transformed.rename(columns=rename_dict, inplace=True)
-    else:
-        transformed = MoexConnector.generate_dataframe_from_tree(
-            ElementTree.fromstring(text)
-        )
-        rename_dict = {
-            col: col.lower() for col in transformed.columns
-        }
-        transformed.rename(columns=rename_dict, inplace=True)
+
+    rename_dict = {
+        col: col.lower() for col in transformed.columns
+    }
+    transformed.rename(columns=rename_dict, inplace=True)
 
     if output_format == ConnectorModes.JSON:
         transformed = transformed.to_json(orient='records')
@@ -108,19 +102,15 @@ class MoexConnector(Session):
 
     @classmethod
     def generate_dataframe_from_tree(cls, xml_tree: ElementTree) -> pd.DataFrame:
+        column_types = {
+            column.get('name'): cls._DTYPE_MAP[column.get('type')] for column in xml_tree[0][0][0]
+        }
         df = pd.DataFrame({
-            column.get('name'): pd.Series(
-                dtype=cls._DTYPE_MAP[column.get('type')]
-            ) for column in xml_tree[0][0][0]
+            name: [
+                row.get(name) for row in xml_tree[0][1]
+            ] for name in column_types.keys()
         })
-        df = pd.concat([
-            df,
-            pd.DataFrame({
-                name: [
-                    row.get(name) for row in xml_tree[0][1]
-                ] for name in df.columns.tolist()
-            })
-        ])
+        df = df.astype(column_types)
         return df
 
     @boilerplate_decorator
@@ -284,9 +274,9 @@ class MoexConnector(Session):
         market: str,
         security: str,
         start: Optional[int] = 0,
-        till: Optional[date] = date.today(),
-        _from: Optional[date] = date.today(),
-        interval: Optional[int] = 5,
+        till: Optional[date] = date.today() - timedelta(days=4),
+        _from: Optional[date] = date.today() - timedelta(days=5),
+        interval: Optional[int] = 10,
         params: dict = None
     ):
         """
@@ -301,7 +291,8 @@ class MoexConnector(Session):
             params['interval'] = interval
 
         return self.get(
-            f"{self._base_url}/engines/{engine}/markets/{market}/securities/{security}/candles"
+            f"{self._base_url}/engines/{engine}/markets/{market}/securities/{security}/candles",
+            params=params
         )
 
     @boilerplate_decorator
