@@ -25,11 +25,11 @@ class TestEndpoints(TestCase):
 
     def test_security(self):
         sc = mc.security('SBER')
-        # assert (
-        #     len(self.SECURITY_COLUMNS) ==
-        #     len([col for col in self.SECURITY_COLUMNS if col in sc.columns.tolist()])
-        # )
-        # assert 1 == len(sc.index)
+        assert (
+            len(self.SECURITY_COLUMNS) ==
+            len([col for col in self.SECURITY_COLUMNS if col in sc.columns.tolist()])
+        )
+        assert 1 == len(sc.index)
 
     def test_site_news(self):
         sn = mc.sitenews()
