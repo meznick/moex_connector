@@ -28,4 +28,4 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path-to-lcov: coverage.lcov
-          git-branch: ${GITHUB_REF##*/}
+          git-branch: ${{ GITHUB_REF##*/ }}
