@@ -16,13 +16,7 @@ jobs:
         with:
           python-version: "3.11.5"
       - name: Install deps
-        run: |
-          pip install -r requirements.txt & pip install coveralls
-      - name: Get and pass branch name to Coveralls
-        run: |
-          branch_name=$(echo $GITHUB_REF | awk -F/ '{print $3}')
-          export COVERALLS_REPO_TOKEN=YOUR_COVERALLS_REPO_TOKEN
-          coveralls --branch="$branch_name"
+        run: pip install -r requirements.txt
       - name: Perform unit tests
         run: |
           coverage run --omit='./tests/*' \
@@ -34,3 +28,4 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path-to-lcov: coverage.lcov
+          git-branch: main
