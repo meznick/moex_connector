@@ -31,10 +31,12 @@ def boilerplate_decorator(func):
             )
 
         global SELECTED_MODE
+        func_name = func.__name__
+        transform_map = args[0].response_transform_map
         return transform_result(
             response.text,
             SELECTED_MODE,
-            args[0].response_transform_map[func.__name__]
+            transform_map[func_name] if func_name in transform_map.keys() else TransformTypes.DEFAULT
         )
     return wrapper
 
@@ -90,14 +92,6 @@ class MoexConnector(Session):
             SELECTED_MODE = connector_mode
         self.response_transform_map = {
             self.security.__name__: TransformTypes.SECURITY,
-            self.securities.__name__: TransformTypes.DEFAULT,
-            self.sec_indices.__name__: TransformTypes.DEFAULT,
-            self.sitenews.__name__: TransformTypes.DEFAULT,
-            self.events.__name__: TransformTypes.DEFAULT,
-            self.engines.__name__: TransformTypes.DEFAULT,
-            self.markets.__name__: TransformTypes.DEFAULT,
-            self.boards.__name__: TransformTypes.DEFAULT,
-            self.candles.__name__: TransformTypes.DEFAULT,
         }
 
     @classmethod
