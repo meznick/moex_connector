@@ -1,4 +1,7 @@
+import datetime
+from datetime import date, timedelta
 from unittest import TestCase, main
+
 from moex.connector import MoexConnector, ConnectorModes
 
 mc = MoexConnector(connector_mode=ConnectorModes.DATAFRAME)
@@ -101,15 +104,44 @@ class TestEndpoints(TestCase):
         )
 
     def test_candles(self):
+        from_date = datetime.date.today() - datetime.timedelta(days=5)
         c = mc.candles('stock', 'shares', 'SBER')
         assert (
                 len([col for col in self.CANDLES_COLUMNS if col in c.columns.tolist()]) ==
                 len(self.CANDLES_COLUMNS)
         )
+        assert from_date == c['begin'].min().date()
 
     def test_other_endpoint(self):
         # ts = mc.other_endpoint('turnovers', lang='ru')
         pass
+
+    def test_method_params(self):
+        c = mc.candles('stock', 'shares', 'SBER')
+        assert len(c.index) > 1
+        # this test should fail if running on the weekend
+        assert c.begin.min().date() == date.today() - timedelta(days=5)
+        assert c.end.max().date() <= date.today() - timedelta(days=4)
+
+        c['dt'] = c['end'] - c['begin']
+        # sometimes last\first interval can be a little bit smaller
+        assert (c['dt'] >= timedelta(minutes=9, seconds=50)).min()
+
+        c = mc.candles(
+            'stock',
+            'shares',
+            'SBER',
+            _from=date.today() - timedelta(days=12),
+            till=date.today() - timedelta(days=10),
+            interval='60'
+        )
+
+        assert len(c.index) > 1
+        assert c.begin.min().date() == date.today() - timedelta(days=12)
+        assert c.end.max().date() <= date.today() - timedelta(days=10)
+
+        c['dt'] = c['end'] - c['begin']
+        assert (c['dt'] >= timedelta(minutes=59, seconds=50)).min()
 
 
 if __name__ == '__main__':
