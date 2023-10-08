@@ -23,13 +23,13 @@ class TestEndpoints(TestCase):
     EVENTS_COLUMNS = SITE_NEWS_COLUMNS
     CANDLES_COLUMNS = ['open', 'close', 'high', 'low', 'value', 'volume', 'begin', 'end']
 
-    # def test_security(self):
-    #     sc = mc.security('SBER')
-    #     assert (
-    #         len(self.SECURITY_COLUMNS) ==
-    #         len([col for col in self.SECURITY_COLUMNS if col in sc.columns.tolist()])
-    #     )
-    #     assert 1 == len(sc.index)
+    def test_security(self):
+        sc = mc.security('SBER')
+        assert (
+            len(self.SECURITY_COLUMNS) ==
+            len([col for col in self.SECURITY_COLUMNS if col in sc.columns.tolist()])
+        )
+        assert 1 == len(sc.index)
 
     def test_site_news(self):
         sn = mc.sitenews()
@@ -45,39 +45,39 @@ class TestEndpoints(TestCase):
                 len([col for col in self.EVENTS_COLUMNS if col in e.columns.tolist()])
         )
 
-    # def test_securities(self):
-    #     with self.subTest(params=None):
-    #         scs = mc.securities()
-    #         assert 100 == len(scs)
-    #         assert (
-    #             len([col for col in self.SECURITIES_COLUMNS if col in scs.columns.tolist()]) ==
-    #             len(self.SECURITIES_COLUMNS)
-    #         )
-    #         assert len(scs.id.unique().tolist()) == len(scs)
-    #
-    #     with self.subTest(limit=5):
-    #         scs = mc.securities(limit=5)
-    #         assert 5 == len(scs)
-    #
-    #     with self.subTest(start=7, limit=10):
-    #         # 4 overlapping securities
-    #         scs_0 = mc.securities(start=0, limit=10)
-    #         ids_0 = scs_0.id.unique().tolist()
-    #         scs_1 = mc.securities(start=7, limit=10)
-    #         ids_1 = scs_1.id.unique().tolist()
-    #         assert len(ids_0) == len(ids_1) == 10
-    #         assert len((set(ids_0) - set(ids_1))) == 7
-    #         assert len((set(ids_1) - set(ids_0))) == 7
-    #
-    #     with self.subTest(start=10):
-    #         # 0 overlapping securities
-    #         scs_0 = mc.securities(start=0, limit=10)
-    #         ids_0 = scs_0.id.unique().tolist()
-    #         scs_1 = mc.securities(start=10, limit=10)
-    #         ids_1 = scs_1.id.unique().tolist()
-    #         assert len(ids_0) == len(ids_1) == 10
-    #         assert len((set(ids_0) - set(ids_1))) == 10
-    #         assert len((set(ids_1) - set(ids_0))) == 10
+    def test_securities(self):
+        with self.subTest(params=None):
+            scs = mc.securities()
+            assert 100 == len(scs)
+            assert (
+                len([col for col in self.SECURITIES_COLUMNS if col in scs.columns.tolist()]) ==
+                len(self.SECURITIES_COLUMNS)
+            )
+            assert len(scs.id.unique().tolist()) == len(scs)
+
+        with self.subTest(limit=5):
+            scs = mc.securities(limit=5)
+            assert 5 == len(scs)
+
+        with self.subTest(start=7, limit=10):
+            # 4 overlapping securities
+            scs_0 = mc.securities(start=0, limit=10)
+            ids_0 = scs_0.id.unique().tolist()
+            scs_1 = mc.securities(start=7, limit=10)
+            ids_1 = scs_1.id.unique().tolist()
+            assert len(ids_0) == len(ids_1) == 10
+            assert len((set(ids_0) - set(ids_1))) == 7
+            assert len((set(ids_1) - set(ids_0))) == 7
+
+        with self.subTest(start=10):
+            # 0 overlapping securities
+            scs_0 = mc.securities(start=0, limit=10)
+            ids_0 = scs_0.id.unique().tolist()
+            scs_1 = mc.securities(start=10, limit=10)
+            ids_1 = scs_1.id.unique().tolist()
+            assert len(ids_0) == len(ids_1) == 10
+            assert len((set(ids_0) - set(ids_1))) == 10
+            assert len((set(ids_1) - set(ids_0))) == 10
 
     def test_engines(self):
         e = mc.engines()
@@ -112,6 +112,9 @@ class TestEndpoints(TestCase):
 
     def test_other_endpoint(self):
         # ts = mc.other_endpoint('turnovers', lang='ru')
+        pass
+
+    def test_method_params(self):
         pass
 
 

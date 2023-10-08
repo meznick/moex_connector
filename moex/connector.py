@@ -104,7 +104,7 @@ class MoexConnector(Session):
                 row.get(name) for row in xml_tree[0][1]
             ] for name in column_types.keys()
         })
-        df = df.astype(column_types)
+        df = df.astype(column_types, errors='ignore')
         return df
 
     @boilerplate_decorator
