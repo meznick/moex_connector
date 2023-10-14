@@ -1,5 +1,5 @@
 # MOEX Connector
-[![Coverage Status](https://coveralls.io/repos/github/meznick/moex_connector/badge.svg?branch=%24%7BGITHUB_REF%23%23%2A/%7D)](https://coveralls.io/github/meznick/moex_connector?branch=%24%7BGITHUB_REF%23%23%2A/%7D)
+[![Coverage Status](https://coveralls.io/repos/github/meznick/moex_connector/badge.svg?branch=%24%7BGITHUB_REF%23%23%2A/%7D)](https://coveralls.io/github/meznick/moex_connector?branch=main)
 Копипаста с moex.com:
 ```
 Информационно-статистический сервер Московской Биржи (ИСС / ISS) функционирует в рамках 
