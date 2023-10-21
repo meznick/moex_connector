@@ -1,9 +1,12 @@
-name: Generate coverage
+name: Run code tests
 
 on:
   push:
     branches:
-      - 'main'
+      - 'task/*'
+      - 'hotfix/*'
+      - 'feature/*'
+      - 'fix/*'
 
 jobs:
   build:
@@ -20,11 +23,3 @@ jobs:
         run: |
           coverage run --omit='./tests/*' \
           -m pytest -o log_cli=true -v
-      - name: Generate coverage report
-        run: coverage lcov
-      - name: Coveralls GitHub Action
-        uses: coverallsapp/github-action@v1.2.0
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          path-to-lcov: coverage.lcov
-          git-branch: main
