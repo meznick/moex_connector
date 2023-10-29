@@ -1,11 +1,12 @@
+import logging
 from datetime import date, timedelta
 from enum import Enum
 from functools import wraps
-
-from requests import Session
 from typing import Optional
 from xml.etree import ElementTree
+
 import pandas as pd
+from requests import Session
 
 
 class ConnectorModes(Enum):
@@ -46,23 +47,21 @@ def transform_result(
     output_format: Optional[ConnectorModes],
     transform_type: Optional[TransformTypes] = TransformTypes.DEFAULT,
 ):
-    transformed = MoexConnector.generate_dataframe_from_tree(
-        ElementTree.fromstring(text)
-    )
+    data = MoexConnector.response_text_to_df(text)
 
     if transform_type == TransformTypes.SECURITY:
-        transformed.index = transformed.name
-        transformed = transformed[['value']].transpose()
+        data.index = data.name
+        data = data[['value']].transpose()
 
     rename_dict = {
-        col: col.lower() for col in transformed.columns
+        col: col.lower() for col in data.columns
     }
-    transformed.rename(columns=rename_dict, inplace=True)
+    data.rename(columns=rename_dict, inplace=True)
 
     if output_format == ConnectorModes.JSON:
-        transformed = transformed.to_json(orient='records')
+        data = data.to_json(orient='records')
 
-    return transformed
+    return data
 
 
 class MoexConnector(Session):
@@ -95,16 +94,35 @@ class MoexConnector(Session):
         }
 
     @classmethod
+    def response_text_to_df(cls, text: str) -> pd.DataFrame:
+        return cls.generate_dataframe_from_tree(ElementTree.fromstring(text))
+
+    @classmethod
     def generate_dataframe_from_tree(cls, xml_tree: ElementTree) -> pd.DataFrame:
-        column_types = {
-            column.get('name'): cls._DTYPE_MAP[column.get('type')] for column in xml_tree[0][0][0]
-        }
-        df = pd.DataFrame({
-            name: [
-                row.get(name) for row in xml_tree[0][1]
-            ] for name in column_types.keys()
-        })
-        df = df.astype(column_types, errors='ignore')
+        try:
+            metadata = xml_tree[0][0].tag == 'metadata'
+        except Exception as e:
+            logging.warning(e)
+            metadata = False
+
+        if metadata:
+            column_types = {
+                column.get('name'): cls._DTYPE_MAP[column.get('type')] for column in xml_tree[0][0][0]
+            }
+            df = pd.DataFrame({
+                name: [
+                    row.get(name) for row in xml_tree[0][1]
+                ] for name in column_types.keys()
+            })
+            df = df.astype(column_types, errors='ignore')
+        else:
+            rows = [r for r in xml_tree[0]]
+            data = []
+            for index, row in enumerate(rows):
+                data.append(
+                    pd.DataFrame(row.attrib, index=[index])
+                )
+            df = pd.concat(data)
         return df
 
     @boilerplate_decorator
@@ -287,3 +305,13 @@ class MoexConnector(Session):
         Call any other API method from list https://iss.moex.com/iss/reference/.
         """
         return self.get(f"{self._base_url}/{endpoint}", params=kwargs)
+
+    def get_members(self):
+        """
+        Get MOEX members.
+        https://www.moex.com/ru/members.aspx?tid=668&sby=6
+        """
+        url = 'https://web.moex.com/moex-web-icdb-api/api/v1/export/site-uts/xml?language=1'
+        response = self.get(url)
+        data = self.response_text_to_df(response.text)
+        return data

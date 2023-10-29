@@ -143,6 +143,10 @@ class TestEndpoints(TestCase):
         c['dt'] = c['end'] - c['begin']
         assert (c['dt'] >= timedelta(minutes=59, seconds=50)).min()
 
+    def test_members(self):
+        m = mc.get_members()
+        assert len(m)
+
 
 if __name__ == '__main__':
     main()
