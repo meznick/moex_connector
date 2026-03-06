@@ -50,9 +50,9 @@ class MoexConnector(Session):
     class APIException(Exception):
         pass
 
-    base_url = "https://iss.moex.com/iss"
+    _base_url = "https://iss.moex.com/iss"
 
-    DTYPE_MAP = {
+    _dtype_map = {
         'int64': 'int64',
         'int32': 'int32',
         'string': 'string',
@@ -87,7 +87,7 @@ class MoexConnector(Session):
 
         if metadata:
             column_types = {
-                column.get('name'): cls._DTYPE_MAP[column.get('type')] for column in xml_tree[0][0][0]
+                column.get('name'): cls._dtype_map[column.get('type')] for column in xml_tree[0][0][0]
             }
             df = pd.DataFrame({
                 name: [
@@ -285,13 +285,3 @@ class MoexConnector(Session):
         Call any other API method from list https://iss.moex.com/iss/reference/.
         """
         return self.get(f"{self._base_url}/{endpoint}", params=kwargs)
-
-    def get_members(self):
-        """
-        Get MOEX members.
-        https://www.moex.com/ru/members.aspx?tid=668&sby=6
-        """
-        url = 'https://web.moex.com/moex-web-icdb-api/api/v1/export/site-uts/xml?language=1'
-        response = self.get(url)
-        data = self.response_text_to_df(response.text)
-        return data
