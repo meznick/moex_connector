@@ -9,5 +9,9 @@ setup(
     install_requires=[
         'requests>=2.28,<3',
         'pandas>2,<3',
+        'certifi',
+        'charset-normalizer',
+        'idna',
+        'urllib3'
     ]
 )
