@@ -1,0 +1,25 @@
+name: Run code tests
+
+on:
+  push:
+    branches:
+      - 'task/*'
+      - 'hotfix/*'
+      - 'feature/*'
+      - 'fix/*'
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11.5"
+      - name: Install deps
+        run: pip install -r requirements.txt
+      - name: Perform unit tests
+        run: |
+          coverage run --omit='./tests/*' \
+          -m pytest -o log_cli=true -v

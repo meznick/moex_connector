@@ -1,5 +1,6 @@
 # MOEX Connector
-Копипаста с moex.com:
+[![Coverage Status](https://coveralls.io/repos/github/meznick/moex_connector/badge.svg?branch=main)](https://coveralls.io/github/meznick/moex_connector?branch=main)
+
 ```
 Информационно-статистический сервер Московской Биржи (ИСС / ISS) функционирует в рамках 
 программного комплекса Интернет-представительства Московской Биржи и служит для предоставления 
@@ -21,6 +22,10 @@ git clone git@github.com:meznick/moex_connector.git
 cd moex_connector
 pip install .
 ``` 
+
+## Возможности
+- обертка для основных методов API
+- универсальная обертка для всех остальных методов (other_endpoint)
 
 ## Использование
 Создаем новый экземпляр:
@@ -55,7 +60,7 @@ mc.sec_indices(
 
 # для эндпоинтов которые еще красиво не имплементированы можно воспользоваться
 mc.other_endpoint(
-    endpoint='/iss/statistics/engines/stock/markets/index/rusfar',
+    endpoint='statistics/engines/stock/markets/index/rusfar',
     kwargs={
         'date': '2024-01-01'
     }
@@ -69,3 +74,4 @@ mc.other_endpoint(
 - Доделать аннотации параметров к популярным методам
 - более умное форматирование возвращаемых данных
 - асинхронность
+- обертка выгрузки данных не помещающихся в один запрос

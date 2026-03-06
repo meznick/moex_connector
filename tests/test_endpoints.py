@@ -1,3 +1,5 @@
+import datetime
+from datetime import date, timedelta
 from unittest import TestCase, main
 from moex.connector import MoexConnector, ConnectorModes
 
@@ -22,6 +24,11 @@ class TestEndpoints(TestCase):
     NEWS_COLUMNS = ['ID', 'TAG', 'TITLE', 'PUBLISHED_AT', 'MODIFIED_AT']
 
     EVENTS_COLUMNS = ['ID', 'TAG', 'TITLE', 'FROM', 'MODIFIED_AT']
+
+    ENGINES_COLUMNS = ['ID', 'NAME', 'TITLE']
+    MARKET_COLUMNS = ENGINES_COLUMNS
+    BOARDS_COLUMNS = ['ID', 'BOARD_GROUP_ID', 'BOARDID', 'TITLE', 'IS_TRADED']
+    CANDLES_COLUMNS = ['OPEN', 'CLOSE', 'HIGH', 'LOW', 'VALUE', 'VOLUME', 'BEGIN', 'END']
 
     def test_security(self):
         sc = mc.security('SBER')
@@ -67,9 +74,71 @@ class TestEndpoints(TestCase):
             assert len((set(ids_0) - set(ids_1))) == 10
             assert len((set(ids_1) - set(ids_0))) == 10
 
+    def test_engines(self):
+        e = mc.engines()
+        assert (
+            len([col for col in self.ENGINES_COLUMNS if col in e.columns.tolist()]) ==
+            len(self.ENGINES_COLUMNS)
+        )
+
+    def test_markets(self):
+        m = mc.markets('stock')
+        assert (
+                len([col for col in self.MARKET_COLUMNS if col in m.columns.tolist()]) ==
+                len(self.MARKET_COLUMNS)
+        )
+        assert 0 == sum([x for x in m.isna().sum()])
+
+    def test_boards(self):
+        b = mc.boards('stock', 'shares')
+        assert (
+                len([col for col in self.BOARDS_COLUMNS if col in b.columns.tolist()]) ==
+                len(self.BOARDS_COLUMNS)
+        )
+
+    def test_candles(self):
+        from_date = datetime.date.today() - datetime.timedelta(days=5)
+        c = mc.candles('stock', 'shares', 'SBER')
+        assert (
+                len([col for col in self.CANDLES_COLUMNS if col in c.columns.tolist()]) ==
+                len(self.CANDLES_COLUMNS)
+        )
+        assert from_date == c['begin'].min().date()
+
     def test_other_endpoint(self):
         ts = mc.other_endpoint('turnovers', lang='ru')
         assert ts.shape[0] > 0
+
+    def test_method_params(self):
+        c = mc.candles('stock', 'shares', 'SBER')
+        assert len(c.index) > 1
+        # this test should fail if running on the weekend
+        assert c.begin.min().date() == date.today() - timedelta(days=5)
+        assert c.end.max().date() <= date.today() - timedelta(days=4)
+
+        c['dt'] = c['end'] - c['begin']
+        # sometimes last\first interval can be a little bit smaller
+        assert (c['dt'] >= timedelta(minutes=9, seconds=50)).min()
+
+        c = mc.candles(
+            'stock',
+            'shares',
+            'SBER',
+            _from=date.today() - timedelta(days=12),
+            till=date.today() - timedelta(days=10),
+            interval='60'
+        )
+
+        assert len(c.index) > 1
+        assert c.begin.min().date() == date.today() - timedelta(days=12)
+        assert c.end.max().date() <= date.today() - timedelta(days=10)
+
+        c['dt'] = c['end'] - c['begin']
+        assert (c['dt'] >= timedelta(minutes=59, seconds=50)).min()
+
+    def test_members(self):
+        m = mc.get_members()
+        assert len(m)
 
 
 if __name__ == '__main__':
