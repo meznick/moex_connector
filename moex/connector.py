@@ -38,6 +38,7 @@ def transform_result(
 
     if transpose:
         transformed.index = transformed.name
+        transformed.drop(columns=['name'], inplace=True)
         transformed = transformed.transpose()
 
     if output_format == ConnectorModes.JSON:
