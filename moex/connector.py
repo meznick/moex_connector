@@ -1,26 +1,14 @@
-from enum import Enum
 from functools import wraps
-
-from requests import Session
 from typing import Optional
 from xml.etree import ElementTree
+
 import pandas as pd
+from requests import Session
+
+from moex import TRANSPOSE_SETTING, ConnectorModes, OUTPUT_MODE
 
 
-class ConnectorModes(Enum):
-    DATAFRAME = 'df'
-    JSON = 'json'
-
-
-class TransformTypes(Enum):
-    DEFAULT = 'default'
-    SECURITY = 'security'
-
-
-SELECTED_MODE = ConnectorModes.JSON
-
-
-def boilerplate_decorator(func):
+def process_call_decorator(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         response = func(*args, params=kwargs)
@@ -30,26 +18,26 @@ def boilerplate_decorator(func):
             )
         return transform_result(
             response.text,
-            args[0].response_transform_map[func.__name__]
+            args[0].output_mode,
+            transpose=TRANSPOSE_SETTING.get(func.__name__, False)
         )
     return wrapper
 
 
 def transform_result(
         text: str,
-        transform_type: Optional[TransformTypes] = TransformTypes.DEFAULT,
-        ouput_format: Optional[ConnectorModes] = ConnectorModes.JSON
+        output_format: Optional[ConnectorModes] = ConnectorModes.DATAFRAME,
+        transpose: bool = False,
 ):
-    if transform_type == TransformTypes.SECURITY:
-        transformed = MoexConnector.generate_dataframe_from_tree(
-            ElementTree.fromstring(text)
-        )[['name', 'value']].transpose()
-    else:
-        transformed = MoexConnector.generate_dataframe_from_tree(
-            ElementTree.fromstring(text)
-        )
+    transformed = MoexConnector.generate_dataframe_from_tree(
+        ElementTree.fromstring(text)
+    )
 
-    if ouput_format == ConnectorModes.JSON:
+    if transpose:
+        transformed.index = transformed.name
+        transformed = transformed.transpose()
+
+    if output_format == ConnectorModes.JSON:
         transformed = transformed.to_json(orient='records')
 
     return transformed
@@ -75,15 +63,12 @@ class MoexConnector(Session):
             cls.instance = super().__new__(cls)
         return cls.instance
 
-    def __init__(self, connector_mode: Optional[ConnectorModes] = None):
+    def __init__(self, output_mode: Optional[ConnectorModes] = None):
         super().__init__()
-        global SELECTED_MODE
-        if connector_mode:
-            SELECTED_MODE = connector_mode
-        self.response_transform_map = {
-            self.security.__name__: TransformTypes.SECURITY,
-            self.sec_indices.__name__: TransformTypes.DEFAULT
-        }
+        if output_mode:
+            self.output_mode = output_mode
+        else:
+            self.output_mode = OUTPUT_MODE
 
     @classmethod
     def generate_dataframe_from_tree(cls, xml_tree: ElementTree) -> pd.DataFrame:
@@ -100,7 +85,7 @@ class MoexConnector(Session):
         ])
         return df
 
-    @boilerplate_decorator
+    @process_call_decorator
     def securities(
             self,
             q: Optional[str] = None,
@@ -116,7 +101,7 @@ class MoexConnector(Session):
         ):
         return self.get(f"{self.base_url}/securities", params=params)
 
-    @boilerplate_decorator
+    @process_call_decorator
     def security(
             self,
             ticker: str,
@@ -126,7 +111,7 @@ class MoexConnector(Session):
         ):
         return self.get(f"{self.base_url}/securities/{ticker}", params=params)
 
-    @boilerplate_decorator
+    @process_call_decorator
     def sec_indices(
             self,
             ticker: str,
@@ -136,7 +121,7 @@ class MoexConnector(Session):
         ):
         return self.get(f"{self.base_url}/securities/{ticker}/indices", params=params)
 
-    @boilerplate_decorator
+    @process_call_decorator
     def sitenews(
             self,
             start: int = 0,
@@ -145,7 +130,7 @@ class MoexConnector(Session):
     ):
         return self.get(f"{self.base_url}/sitenews", params=params)
 
-    @boilerplate_decorator
+    @process_call_decorator
     def events(
             self,
             start: int = 0,
@@ -154,7 +139,7 @@ class MoexConnector(Session):
     ):
         return self.get(f"{self.base_url}/events", params=params)
 
-    @boilerplate_decorator
+    @process_call_decorator
     def other_endpoint(
             self,
             endpoint: str,
